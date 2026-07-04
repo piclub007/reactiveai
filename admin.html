@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>PIReactive Admin Panel - Content Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root{
+            --primary:#2563eb;--primary-hover:#1d4ed8;--primary-light:#eff6ff;
+            --bg:#ffffff;--bg-secondary:#f8fafc;--bg-tertiary:#f1f5f9;
+            --surface:#ffffff;--border:#e2e8f0;--border-hover:#cbd5e1;
+            --text:#0f172a;--text-secondary:#475569;--text-muted:#94a3b8;
+            --success:#10b981;--warning:#f59e0b;--error:#ef4444;
+            --shadow-sm:0 1px 2px rgba(0,0,0,.04);--shadow:0 1px 3px rgba(0,0,0,.06);
+            --shadow-md:0 4px 6px rgba(0,0,0,.05);--shadow-lg:0 10px 15px rgba(0,0,0,.06);
+            --radius-sm:6px;--radius:8px;--radius-lg:12px;--radius-xl:16px;
+            --transition:150ms cubic-bezier(.4,0,.2,1);
+            --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+            --font-mono:'Source Code Pro',monospace;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:var(--font-sans);background:var(--bg-secondary);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased}
+        ::selection{background:var(--primary-light);color:var(--primary)}
+
+        .admin-container{max-width:1200px;margin:0 auto;padding:20px 24px}
+
+        /* Header */
+        .admin-header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm)}
+        .admin-header-content{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+        .admin-logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800;text-decoration:none;color:var(--text)}
+        .admin-logo span{color:var(--primary);font-size:22px}
+        .admin-actions{display:flex;gap:8px;flex-wrap:wrap}
+        .admin-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)}
+        .status-dot{width:7px;height:7px;border-radius:50%;background:var(--success);animation:pulse 2s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+        /* Tab Navigation */
+        .tab-nav{display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap;overflow-x:auto;padding-bottom:8px}
+        .tab-nav::-webkit-scrollbar{height:4px}
+        .tab-nav::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+        .tab-btn{padding:8px 14px;border:1px solid var(--border);background:var(--surface);color:var(--text-secondary);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500;white-space:nowrap;transition:var(--transition);font-family:var(--font-sans)}
+        .tab-btn:hover{border-color:var(--primary);color:var(--primary)}
+        .tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 0 16px rgba(37,99,235,.2)}
+        .tab-btn .badge{background:rgba(255,255,255,.25);color:#fff;padding:1px 6px;border-radius:10px;font-size:10px;margin-left:4px}
+
+        /* Content */
+        .tab-content{display:none}.tab-content.active{display:block;animation:fadeIn .3s ease}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+        /* Cards */
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:20px;margin-bottom:16px;box-shadow:var(--shadow-sm);transition:var(--transition)}
+        .card:hover{box-shadow:var(--shadow)}
+        .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+        .card-title{font-size:16px;font-weight:700;font-family:var(--font-sans);display:flex;align-items:center;gap:8px}
+        .card-title i{color:var(--primary);font-size:14px}
+        .card-subtitle{font-size:12px;color:var(--text-muted);margin-top:2px}
+
+        /* Form Elements */
+        .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+        .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+        .form-group{display:flex;flex-direction:column;gap:4px}
+        .form-group label{font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px}
+        .form-group .label-desc{font-size:10px;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0}
+        .form-group input,.form-group textarea,.form-group select{
+            width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);
+            font-size:13px;font-family:var(--font-sans);background:var(--surface);color:var(--text);
+            transition:var(--transition);resize:vertical;
+        }
+        .form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+        .form-group textarea{min-height:80px;font-family:var(--font-mono);font-size:12px}
+        .form-group input[type="color"]{padding:4px 8px;height:40px;cursor:pointer;width:80px}
+        .form-group select{cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+        .form-group input[type="number"]{width:100px}
+        .form-group .input-with-icon{position:relative}
+        .form-group .input-with-icon input{padding-left:32px}
+        .form-group .input-with-icon i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px}
+        .form-check{display:flex;align-items:center;gap:8px;padding:6px 0}
+        .form-check input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary);cursor:pointer}
+        .form-check label{font-size:13px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400}
+        .form-divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+
+        /* Buttons */
+        .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius);font-weight:600;font-size:12px;cursor:pointer;border:none;transition:var(--transition);font-family:var(--font-sans);text-decoration:none;letter-spacing:.3px}
+        .btn-primary{background:var(--primary);color:#fff;box-shadow:0 0 16px rgba(37,99,235,.15)}.btn-primary:hover{background:var(--primary-hover);box-shadow:0 0 24px rgba(37,99,235,.25);transform:translateY(-1px)}
+        .btn-success{background:var(--success);color:#fff}.btn-success:hover{filter:brightness(1.1)}
+        .btn-danger{background:var(--error);color:#fff}.btn-danger:hover{filter:brightness(1.1)}
+        .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text-secondary)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+        .btn-ghost{background:transparent;color:var(--text-muted);padding:6px 10px}.btn-ghost:hover{color:var(--error);background:rgba(239,68,68,.05)}
+        .btn-sm{padding:5px 10px;font-size:10px;border-radius:var(--radius-sm)}
+        .btn:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}
+
+        /* Item Lists */
+        .item-list{display:flex;flex-direction:column;gap:6px;max-height:400px;overflow-y:auto}
+        .item-list::-webkit-scrollbar{width:5px}
+        .item-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+        .item-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border);transition:var(--transition)}
+        .item-row:hover{border-color:var(--primary);background:var(--primary-light)}
+        .item-info{display:flex;flex-direction:column;gap:2px}
+        .item-title{font-weight:600;font-size:13px}
+        .item-meta{font-size:11px;color:var(--text-muted)}
+        .item-actions{display:flex;gap:4px}
+        .empty-state{text-align:center;padding:40px 20px;color:var(--text-muted)}
+        .empty-state i{font-size:40px;margin-bottom:10px;opacity:.3}
+        .empty-state p{font-size:14px}
+
+        /* Toast */
+        .toast-container{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+        .toast{padding:12px 18px;border-radius:var(--radius);color:#fff;font-weight:500;font-size:13px;box-shadow:var(--shadow-lg);animation:slideIn .3s ease;display:flex;align-items:center;gap:8px;max-width:380px}
+        .toast.success{background:#059669}.toast.error{background:#dc2626}.toast.info{background:var(--primary)}
+        @keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+        /* Quick Stats */
+        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+        .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;text-align:center;transition:var(--transition)}
+        .stat-card:hover{border-color:var(--primary)}
+        .stat-number{font-size:28px;font-weight:800;color:var(--primary);font-family:var(--font-mono)}
+        .stat-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
+        /* Modal */
+        .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease}
+        .modal{background:var(--surface);border-radius:var(--radius-xl);padding:24px;max-width:500px;width:90%;box-shadow:var(--shadow-xl);max-height:80vh;overflow-y:auto}
+        .modal h3{font-size:18px;margin-bottom:16px}
+        .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+
+        @media(max-width:768px){
+            .form-row,.form-row-3{grid-template-columns:1fr}
+            .form-grid{grid-template-columns:1fr}
+            .admin-header-content{flex-direction:column;align-items:flex-start}
+            .tab-nav{flex-wrap:nowrap}
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="admin-header-content">
+            <a href="/" class="admin-logo"><span>◉</span> PIReactive Admin</a>
+            <div class="admin-actions">
+                <div class="admin-status"><span class="status-dot"></span> Firestore Connected</div>
+                <a href="/" class="btn btn-outline btn-sm" target="_blank"><i class="fas fa-external-link-alt"></i> View Site</a>
+                <button class="btn btn-outline btn-sm" onclick="exportAllData()"><i class="fas fa-download"></i> Export</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="admin-container">
+
+        <!-- Quick Stats -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card"><div class="stat-number" id="statAssistants">-</div><div class="stat-label">Assistants</div></div>
+            <div class="stat-card"><div class="stat-number" id="statDocs">-</div><div class="stat-label">Documents</div></div>
+            <div class="stat-card"><div class="stat-number" id="statNav">-</div><div class="stat-label">Nav Items</div></div>
+            <div class="stat-card"><div class="stat-number" id="statMessages">-</div><div class="stat-label">Chat Messages</div></div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav" id="tabNav">
+            <button class="tab-btn active" onclick="switchTab('dashboard')"><i class="fas fa-home"></i> Dashboard</button>
+            <button class="tab-btn" onclick="switchTab('site')"><i class="fas fa-cog"></i> Site Config</button>
+            <button class="tab-btn" onclick="switchTab('meta')"><i class="fas fa-link"></i> Meta Nav</button>
+            <button class="tab-btn" onclick="switchTab('social')"><i class="fas fa-share-alt"></i> Social</button>
+            <button class="tab-btn" onclick="switchTab('mainnav')"><i class="fas fa-bars"></i> Main Nav</button>
+            <button class="tab-btn" onclick="switchTab('widgets')"><i class="fas fa-th-large"></i> Widgets</button>
+            <button class="tab-btn" onclick="switchTab('listwidgets')"><i class="fas fa-list"></i> List Widgets</button>
+            <button class="tab-btn" onclick="switchTab('bottomrow')"><i class="fas fa-layer-group"></i> Bottom Row</button>
+            <button class="tab-btn" onclick="switchTab('mission')"><i class="fas fa-flag"></i> Mission</button>
+            <button class="tab-btn" onclick="switchTab('assistants')"><i class="fas fa-robot"></i> Assistants <span class="badge" id="assistantCount">0</span></button>
+            <button class="tab-btn" onclick="switchTab('about')"><i class="fas fa-info-circle"></i> About</button>
+            <button class="tab-btn" onclick="switchTab('docs')"><i class="fas fa-book"></i> Docs</button>
+            <button class="tab-btn" onclick="switchTab('forums')"><i class="fas fa-comments"></i> Forums</button>
+            <button class="tab-btn" onclick="switchTab('footer')"><i class="fas fa-shoe-prints"></i> Footer</button>
+        </div>
+
+        <!-- ===== DASHBOARD ===== -->
+        <div class="tab-content active" id="tab-dashboard">
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-tachometer-alt"></i> Quick Actions</div></div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <button class="btn btn-primary" onclick="switchTab('assistants')"><i class="fas fa-plus"></i> Add Assistant</button>
+                    <button class="btn btn-success" onclick="switchTab('widgets')"><i class="fas fa-plus"></i> Add Widget</button>
+                    <button class="btn btn-outline" onclick="switchTab('docs')"><i class="fas fa-plus"></i> Add Documentation</button>
+                    <button class="btn btn-outline" onclick="switchTab('forums')"><i class="fas fa-plus"></i> Add Forum</button>
+                    <button class="btn btn-outline" onclick="switchTab('site')"><i class="fas fa-palette"></i> Edit Site Colors</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-clock"></i> Recent Activity</div></div>
+                <p style="font-size:13px;color:var(--text-muted)">Activity tracking coming soon. Changes are saved in real-time to Firestore.</p>
+            </div>
+        </div>
+
+        <!-- ===== SITE CONFIG ===== -->
+        <div class="tab-content" id="tab-site">
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-cog"></i> Site Configuration</div></div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Site Name</label><input id="sName" placeholder="PIReactive"></div>
+                    <div class="form-group"><label>Tagline</label><input id="sTagline" placeholder="Python Desktop Automation"></div>
+                    <div class="form-group"><label>Primary Color</label><input id="sColor" type="color" value="#2563eb"></div>
+                    <div class="form-group"><label>Logo Emoji</label><input id="sLogo" value="◉" maxlength="5"></div>
+                </div>
+                <hr class="form-divider">
+                <button class="btn btn-primary" onclick="saveSiteConfig()"><i class="fas fa-save"></i> Save Site Configuration</button>
+                <button class="btn btn-outline" onclick="loadSiteConfig()" style="margin-left:8px"><i class="fas fa-sync"></i> Reload</button>
+            </div>
+        </div>
+
+        <!-- ===== META NAV ===== -->
+        <div class="tab-content" id="tab-meta">
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-link"></i> Meta Navigation</div><span class="card-subtitle">Top bar links</span></div>
+                <div class="item-list" id="metaList"></div>
+                <hr class="form-divider">
+                <div class="card-title" style="margin-bottom:12px"><i class="fas fa-plus-circle"></i> Add Meta Nav Item</div>
+                <div class="form-row">
+                    <div class="form-group"><label>Label</label><input id="metaLabel" placeholder="Home"></div>
+                    <div class="form-group"><label>Page</label><select id="metaPage"><option value="home">Home</option><option value="assistants">Assistants</option><option value="about">About</option><option value="downloads">Downloads</option><option value="docs">Documentation</option><option value="community">Community</option></select></div>
+                    <div class="form-group"><label>Order</label><input id="metaOrder" type="number" value="1" min="1"></div>
+                </div>
+                <button class="btn btn-primary" onclick="addMetaNav()" style="margin-top:8px"><i class="fas fa-plus"></i> Add Item</button>
+            </div>
+        </div>
+
+        <!-- ===== SOCIAL NAV ===== -->
+        <div class="tab-content" id="tab-social">
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-share-alt"></i> Social Links</div><span class="card-subtitle">Socialize dropdown</span></div>
+                <div class="item-list" id="socialList"></div>
+                <hr class="form-divider">
+                <div class="card-title" style="margin-bottom:12px"><i class="fas fa-plus-circle"></i> Add Social Link</div>
+                <div class="form-row">
+                    <div class="form-group"><label>Label</label><input id="socLabel" placeholder="GitHub"></div>
+                    <div class="form-group"><label>Icon (Font Awesome)</label><input id="socIcon" value="fab fa-github" placeholder="fab fa-github"></div>
+                    <div class="form-group"><label>URL</label><input id="socUrl" placeholder="https://github.com/pireactive"></div>
+                    <div class="form-group"><label>Order</label><input id="socOrder" type="number" value="1" min="1"></div>
+                </div>
+                <button class="btn btn-primary" onclick="addSocialNav()" style="margin-top:8px"><i class="fas fa-plus"></i> Add Link</button>
+            </div>
+        </div>
+
+        <!-- ===== MAIN NAV ===== -->
+        <div class="tab-content" id="tab-mainnav">
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-bars"></i> Main Navigation</div><span class="card-subtitle">Primary navigation tabs</span></div>
+                <div class="item-list" id="mainnavList"></div>
+                <hr class="form-divider">
+                <div class="card-title" style="margin-bottom:12px"><i class="fas fa-plus-circle"></i> Add Nav Item</div>
+                <div class="form-row">
+                    <div class="form-group"><label>Label</label><input id="navLabel" placeholder="Home"></div>
+                    <div class="form-group"><label>Page</label><select id="navPage"><option value="home">Home</option><option value="assistants">Assistants</option><option value="about">About</option><option value="downloads">Downloads</option><option value="docs">Documentation</option><option value="community">Community</option></select></div>
+                    <div class="form-group"><label>Order</label><input id="navOrder" type="number" value="1" min="1"></div>
+                </div>
+                <button class="btn btn-primary" onclick="addMainNav()" style="margin-top:8px"><i class="fas fa-plus"></i> Add Item</button>
+            </div>
+        </div>
+
+        <!-- ===== WIDGETS ===== -->
+        <div class="tab-content" id="tab-widgets">
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-th-large"></i> Small Widgets</div><span class="card-subtitle">Home page top row</span></div>
+                <div class="item-list" id="widgetsList"></div>
+                <hr class="form-divider">
+                <div class="card-title" style="margin-bottom:12px"><i class="fas fa-plus-circle"></i> Add Widget</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Title</label><input id="wTitle" placeholder="Get Started"></div>
+                    <div class="form-group"><label>Description</label><textarea id="wDesc" placeholder="Brief description..." rows="2"></textarea></div>
+                    <div class="form-group"><label>Link Text</label><input id="wLinkText" placeholder="Learn More"></div>
+                    <div class="form-group"><label>Link Page</label><select id="wLinkPage"><option value="home">Home</option><option value="assistants">Assistants</option><option value="about">About</option><option value="downloads">Downloads</option><option value="docs">Documentation</option><option value="community">Community</option></select></div>
+                    <div class="form-group"><label>Order</label><input id="wOrder" type="number" value="1" min="1"></div>
+                </div>
+                <button class="btn btn-primary" onclick="addWidget()" style="margin-top:8px"><i class="fas fa-plus"></i> Add Widget</button>
+            </div>
+        </div>
+
+        <!-- ===== LIST WIDGETS ===== -->
+        <div class="tab-content" id="tab-listwidgets">
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-list"></i> List Widgets</div><span class="card-subtitle">Home page news/events lists</span></div>
+                <div class="item-list" id="lwList"></div>
+                <hr class="form-divider">
+                <div class="card-title" style="margin-bottom:12px"><i class="fas fa-plus-circle"></i> Add List Widget</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Title</label><input id="lwTitle" placeholder="Latest News"></div>
+                    <div class="form-group"><label>Items (JSON Array)</label><textarea id="lwItems" placeholder='[{"title":"Item 1","date":"2026-01-01","dateDisplay":"01-01","link":"#"},{"title":"Item 2","date":"2026-01-02","dateDisplay":"01-02","link":"#"}]' rows="4"></textarea></div>
+                    <div class="form-group"><label>More Link</label><input id="lwMore" placeholder="#"></div>
+                    <div class="form-group"><label>Order</label><input id="lwOrder" type="number" value="1" min="1"></div>
+                </div>
+                <button class="btn btn-primary" onclick="addListWidget()" style="margin-top:8px"><i class="fas fa-plus"></i> Add List Widget</button>
+            </div>
+        </div>
+
+        <!-- ===== BOTTOM ROW ===== -->
+        <div class="tab-content" id="tab-bottomrow">
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-layer-group"></i> Bottom Row</div><span class="card-subtitle">Success stories & applications</span></div>
+                <div class="item-list" id="brList"></div>
+                <hr class="form-divider">
+                <div class="card-title" style="margin-bottom:12px"><i class="fas fa-plus-circle"></i> Add Bottom Row Item</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Type</label><select id="brType" onchange="toggleBottomRowFields()"><option value="success">Success Story</option><option value="applications">Applications</option></select></div>
+                    <div class="form-group"><label>Title</label><input id="brTitle" placeholder="Section Title"></div>
+                    <div class="form-group"><label>More Link</label><input id="brMore" placeholder="#"></div>
+                </div>
+                <div id="brSuccessFields">
+                    <div class="form-grid" style="margin-top:8px">
+                        <div class="form-group"><label>Quote</label><textarea id="brQuote" placeholder="Quote text..." rows="3"></textarea></div>
+                        <div class="form-group"><label>Quote Title</label><input id="brQuoteTitle" placeholder="Story title"></div>
+                        <div class="form-group"><label>Quote Author</label><input id="brQuoteAuthor" placeholder="Author name"></div>
+                        <div class="form-group"><label>Quote Link</label><input id="brQuoteLink" placeholder="#"></div>
+                    </div>
+                </div>
+                <div id="brAppFields" style="display:none">
+                    <div class="form-group" style="margin-top:8px"><label>Categories (JSON)</label><textarea id="brCats" placeholder='[{"name":"Web","items":[{"name":"Django","url":"#"},{"name":"Flask","url":"#"}]}]' rows="4"></textarea></div>
+                </div>
+                <div class="form-group" style="margin-top:8px"><label>Order</label><input id="brOrder" type="number" value="1" min="1"></div>
+                <button class="btn btn-primary" onclick="addBottomRow()" style="margin-top:8px"><i class="fas fa-plus"></i> Add Item</button>
+            </div>
+        </div>
+
+        <!-- ===== MISSION ===== -->
+        <div class="tab-content" id="tab-mission">
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-flag"></i> Mission Widget</div><span class="card-subtitle">Home page bottom widget</span></div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Title</label><input id="mTitle" placeholder="PIReactive Open Source"></div>
+                    <div class="form-group"><label>Description</label><textarea id="mDesc" placeholder="Our mission..." rows="3"></textarea></div>
+                    <div class="form-group"><label>CTA Button 1 Text</label><input id="mCta1" placeholder="Contribute"></div>
+                    <div class="form-group"><label>CTA Button 1 Link</label><input id="mCta1Link" placeholder="#"></div>
+                    <div class="form-group"><label>CTA Button 2 Text</label><input id="mCta2" placeholder="GitHub"></div>
+                    <div class="form-group"><label>CTA Button 2 Link</label><input id="mCta2Link" placeholder="#"></div>
+                </div>
+                <button class="btn btn-primary" onclick="saveMission()" style="margin-top:8px"><i class="fas fa-save"></i> Save Mission</button>
+            </div>
+        </div>
+
+        <!-- ===== ASSISTANTS ===== -->
+        <div class="tab-content" id="tab-assistants">
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-robot"></i> Assistants</div><span class="card-subtitle">Manage all AI assistant models</span></div>
+                <div class="item-list" id="asList"></div>
+                <hr class="form-divider">
+                <div class="card-title" style="margin-bottom:12px"><i class="fas fa-plus-circle"></i> Add / Edit Assistant</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Name *</label><input id="asName" placeholder="PIReactive Lite"></div>
+                    <div class="form-group"><label>Version *</label><input id="asVersion" placeholder="v1.0"></div>
+                    <div class="form-group"><label>Description</label><textarea id="asDesc" placeholder="Describe this assistant..." rows="3"></textarea></div>
+                    <div class="form-group"><label>Icon (Font Awesome)</label><div class="input-with-icon"><i class="fas fa-robot"></i><input id="asIcon" value="fas fa-robot"></div></div>
+                    <div class="form-group"><label>Badge</label><input id="asBadge" placeholder="Free / Popular / Pro / Beta"></div>
+                    <div class="form-group"><label>Features (comma separated)</label><textarea id="asFeats" placeholder="Feature 1, Feature 2, Feature 3" rows="2"></textarea></div>
+                    <div class="form-group"><label>Tech Stack (comma separated)</label><input id="asTech" placeholder="Python, Tkinter, OpenCV">
+                    </div>
+                    <div class="form-group"><label>Download Link</label><input id="asDL" placeholder="#"></div>
+                    <div class="form-group"><label>GitHub Link</label><input id="asGH" placeholder="#"></div>
+                    <div class="form-group"><label>Order</label><input id="asOrder" type="number" value="1" min="1"></div>
+                </div>
+                <input type="hidden" id="asEditId">
+                <div style="display:flex;gap:8px;margin-top:12px">
+                    <button class="btn btn-primary" onclick="saveAssistant()"><i class="fas fa-save"></i> Save Assistant</button>
+                    <button class="btn btn-outline" onclick="clearAssistantForm()"><i class="fas fa-times"></i> Clear Form</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ABOUT ===== -->
+        <div class="tab-content" id="tab-about">
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-info-circle"></i> About Page</div></div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Title</label><input id="abTitle" placeholder="About PIReactive"></div>
+                    <div class="form-group"><label>Content</label><textarea id="abContent" placeholder="Main about text..." rows="4"></textarea></div>
+                    <div class="form-group"><label>Features (JSON Array)</label><textarea id="abFeatures" placeholder='[{"icon":"fas fa-bolt","title":"Fast","description":"Lightning fast performance"},{"icon":"fas fa-shield","title":"Secure","description":"Privacy first"}]' rows="4"></textarea></div>
+                </div>
+                <button class="btn btn-primary" onclick="saveAbout()" style="margin-top:8px"><i class="fas fa-save"></i> Save About Page</button>
+            </div>
+        </div>
+
+        <!-- ===== DOCS ===== -->
+        <div class="tab-content" id="tab-docs">
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-book"></i> Documentation</div></div>
+                <div class="item-list" id="docsList"></div>
+                <hr class="form-divider">
+                <div class="card-title" style="margin-bottom:12px"><i class="fas fa-plus-circle"></i> Add Documentation</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Title</label><input id="docTitle" placeholder="Getting Started Guide"></div>
+                    <div class="form-group"><label>Description</label><textarea id="docDesc" placeholder="Brief description..." rows="2"></textarea></div>
+                    <div class="form-group"><label>Link</label><input id="docLink" placeholder="#"></div>
+                    <div class="form-group"><label>Order</label><input id="docOrder" type="number" value="1" min="1"></div>
+                </div>
+                <button class="btn btn-primary" onclick="addDoc()" style="margin-top:8px"><i class="fas fa-plus"></i> Add Documentation</button>
+            </div>
+        </div>
+
+        <!-- ===== FORUMS ===== -->
+        <div class="tab-content" id="tab-forums">
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-comments"></i> Discussion Forums</div></div>
+                <div class="item-list" id="forumList"></div>
+                <hr class="form-divider">
+                <div class="card-title" style="margin-bottom:12px"><i class="fas fa-plus-circle"></i> Add Forum</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Title</label><input id="fTitle" placeholder="General Discussion"></div>
+                    <div class="form-group"><label>Description</label><textarea id="fDesc" placeholder="Forum description..." rows="2"></textarea></div>
+                    <div class="form-group"><label>Link</label><input id="fLink" placeholder="#"></div>
+                    <div class="form-group"><label>Order</label><input id="fOrder" type="number" value="1" min="1"></div>
+                </div>
+                <button class="btn btn-primary" onclick="addForum()" style="margin-top:8px"><i class="fas fa-plus"></i> Add Forum</button>
+            </div>
+        </div>
+
+        <!-- ===== FOOTER ===== -->
+        <div class="tab-content" id="tab-footer">
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-shoe-prints"></i> Footer Configuration</div></div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Copyright Text</label><input id="fCopyright" value="&copy; 2026 PIReactive. MIT Licensed."></div>
+                    <div class="form-group"><label>Footer Links (JSON)</label><textarea id="fLinks" placeholder='[{"label":"Help","url":"#"},{"label":"Privacy","url":"#"}]' rows="3"></textarea></div>
+                </div>
+                <button class="btn btn-primary" onclick="saveFooterBottom()" style="margin-top:8px"><i class="fas fa-save"></i> Save Footer</button>
+                <hr class="form-divider">
+                <div class="card-title" style="margin-bottom:12px"><i class="fas fa-sitemap"></i> Footer Navigation</div>
+                <div class="item-list" id="footerNavList"></div>
+                <hr class="form-divider">
+                <div class="card-title" style="margin-bottom:12px"><i class="fas fa-plus-circle"></i> Add Footer Nav Item</div>
+                <div class="form-row">
+                    <div class="form-group"><label>Label</label><input id="fnLabel" placeholder="Home"></div>
+                    <div class="form-group"><label>Page</label><select id="fnPage"><option value="home">Home</option><option value="assistants">Assistants</option><option value="about">About</option><option value="downloads">Downloads</option><option value="docs">Documentation</option><option value="community">Community</option></select></div>
+                    <div class="form-group"><label>Order</label><input id="fnOrder" type="number" value="1" min="1"></div>
+                </div>
+                <button class="btn btn-primary" onclick="addFooterNav()" style="margin-top:8px"><i class="fas fa-plus"></i> Add Footer Nav</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, setDoc, addDoc, deleteDoc, query, orderBy, where } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtHa9wAryji3EdWwhxT7tUwZquRD-LJvI",
+            authDomain: "project-k-dbaef.firebaseapp.com",
+            projectId: "project-k-dbaef",
+            storageBucket: "project-k-dbaef.firebasestorage.app",
+            messagingSenderId: "356936578912",
+            appId: "1:356936578912:web:c7accd7dc18acd969e1005"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ===== UTILITY FUNCTIONS =====
+        window.g = (id) => document.getElementById(id)?.value || '';
+        window.s = (id, value) => { const el = document.getElementById(id); if (el) el.value = value; };
+
+        window.showToast = (message, type = 'success') => {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+            toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity .3s'; setTimeout(() => toast.remove(), 300); }, 3000);
+        };
+
+        window.switchTab = (tabName) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            const tabContent = document.getElementById('tab-' + tabName);
+            if (tabContent) tabContent.classList.add('active');
+            const tabBtn = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
+            if (tabBtn) tabBtn.classList.add('active');
+            loadTabData(tabName);
+        };
+
+        window.saveDoc = async (coll, docId, data) => {
+            try {
+                await setDoc(doc(db, coll, docId), data);
+                showToast('Saved successfully! ✅', 'success');
+            } catch (e) { showToast('Error: ' + e.message, 'error'); }
+        };
+
+        window.addToCollection = async (coll, data) => {
+            try {
+                await addDoc(collection(db, coll), data);
+                showToast('Added successfully! ✅', 'success');
+                const activeTab = document.querySelector('.tab-btn.active')?.textContent?.toLowerCase().replace(/\s+/g, '') || 'site';
+                loadTabData(getTabNameFromButton());
+            } catch (e) { showToast('Error: ' + e.message, 'error'); }
+        };
+
+        function getTabNameFromButton() {
+            const btn = document.querySelector('.tab-btn.active');
+            if (!btn) return 'dashboard';
+            const onclick = btn.getAttribute('onclick') || '';
+            const match = onclick.match(/'([^']+)'/);
+            return match ? match[1] : 'dashboard';
+        }
+
+        window.deleteFromCollection = async (coll, docId) => {
+            if (!confirm('Are you sure you want to delete this item? This cannot be undone.')) return;
+            try {
+                await deleteDoc(doc(db, coll, docId));
+                showToast('Deleted successfully! 🗑️', 'info');
+                loadTabData(getTabNameFromButton());
+            } catch (e) { showToast('Error: ' + e.message, 'error'); }
+        };
+
+        function makeItemList(listId, items, titleFn, metaFn) {
+            const list = document.getElementById(listId);
+            if (!list) return;
+            if (items.length === 0) {
+                list.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>No items yet. Add one below!</p></div>`;
+                return;
+            }
+            list.innerHTML = items.map(item => `
+                <div class="item-row">
+                    <div class="item-info">
+                        <span class="item-title">${titleFn(item)}</span>
+                        ${metaFn ? `<span class="item-meta">${metaFn(item)}</span>` : ''}
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn btn-ghost btn-sm" onclick="deleteFromCollection('${item._collection}','${item._id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ===== DATA LOADERS =====
+        async function loadTabData(tabName) {
+            const loaders = {
+                dashboard: loadDashboard,
+                site: loadSiteConfig,
+                meta: () => loadListTab('meta_nav', 'metaList', d => d.label, d => `Page: ${d.page} | Order: ${d.order}`),
+                social: () => loadListTab('social_nav', 'socialList', d => d.label, d => d.url),
+                mainnav: () => loadListTab('main_nav', 'mainnavList', d => d.label, d => `Page: ${d.page} | Order: ${d.order}`),
+                widgets: () => loadListTab('small_widgets', 'widgetsList', d => d.title, d => d.description),
+                listwidgets: () => loadListTab('list_widgets', 'lwList', d => d.title, d => `${(d.items || []).length} items`),
+                bottomrow: () => loadListTab('bottom_row', 'brList', d => d.title, d => `Type: ${d.type}`),
+                mission: loadMission,
+                assistants: loadAssistantsTab,
+                about: loadAbout,
+                docs: () => loadListTab('documentation', 'docsList', d => d.title, d => d.description),
+                forums: () => loadListTab('forums', 'forumList', d => d.title, d => d.description),
+                footer: loadFooter
+            };
+            if (loaders[tabName]) await loaders[tabName]();
+        }
+
+        async function loadListTab(collectionName, listId, titleFn, metaFn) {
+            const q = query(collection(db, collectionName), orderBy("order"));
+            const snap = await getDocs(q);
+            const items = [];
+            snap.forEach(d => items.push({ ...d.data(), _id: d.id, _collection: collectionName }));
+            makeItemList(listId, items, titleFn, metaFn);
+        }
+
+        // ===== SITE CONFIG =====
+        async function loadSiteConfig() {
+            const snap = await getDoc(doc(db, "settings", "site_config"));
+            if (snap.exists()) {
+                const d = snap.data();
+                s('sName', d.siteName || '');
+                s('sTagline', d.tagline || '');
+                s('sColor', d.primaryColor || '#2563eb');
+                s('sLogo', d.logo || '◉');
+            }
+        }
+        window.saveSiteConfig = async () => {
+            await saveDoc('settings', 'site_config', {
+                siteName: g('sName'), tagline: g('sTagline'),
+                primaryColor: g('sColor'), logo: g('sLogo')
+            });
+        };
+
+        // ===== MISSION =====
+        async function loadMission() {
+            const snap = await getDoc(doc(db, "settings", "mission"));
+            if (snap.exists()) {
+                const d = snap.data();
+                s('mTitle', d.title || ''); s('mDesc', d.description || '');
+                s('mCta1', d.cta1Text || ''); s('mCta1Link', d.cta1Link || '');
+                s('mCta2', d.cta2Text || ''); s('mCta2Link', d.cta2Link || '');
+            }
+        }
+        window.saveMission = async () => {
+            await saveDoc('settings', 'mission', {
+                title: g('mTitle'), description: g('mDesc'),
+                cta1Text: g('mCta1'), cta1Link: g('mCta1Link'),
+                cta2Text: g('mCta2'), cta2Link: g('mCta2Link')
+            });
+        };
+
+        // ===== ABOUT =====
+        async function loadAbout() {
+            const snap = await getDoc(doc(db, "settings", "about"));
+            if (snap.exists()) {
+                const d = snap.data();
+                s('abTitle', d.title || ''); s('abContent', d.content || '');
+                s('abFeatures', JSON.stringify(d.features || [], null, 2));
+            }
+        }
+        window.saveAbout = async () => {
+            try {
+                const features = JSON.parse(g('abFeatures') || '[]');
+                await saveDoc('settings', 'about', { title: g('abTitle'), content: g('abContent'), features });
+            } catch (e) { showToast('Invalid JSON format in Features field', 'error'); }
+        };
+
+        // ===== FOOTER =====
+        async function loadFooter() {
+            const snap = await getDoc(doc(db, "settings", "footer_bottom"));
+            if (snap.exists()) {
+                const d = snap.data();
+                s('fCopyright', d.copyright || '');
+                s('fLinks', JSON.stringify(d.links || [], null, 2));
+            }
+            await loadListTab('footer_nav', 'footerNavList', d => d.label, d => `Page: ${d.page}`);
+        }
+        window.saveFooterBottom = async () => {
+            try {
+                await saveDoc('settings', 'footer_bottom', {
+                    copyright: g('fCopyright'),
+                    links: JSON.parse(g('fLinks') || '[]')
+                });
+            } catch (e) { showToast('Invalid JSON in Footer Links', 'error'); }
+        };
+
+        // ===== ASSISTANTS =====
+        async function loadAssistantsTab() {
+            const q = query(collection(db, "assistants"), orderBy("order"));
+            const snap = await getDocs(q);
+            const items = [];
+            snap.forEach(d => items.push({ ...d.data(), _id: d.id, _collection: 'assistants' }));
+            makeItemList('asList', items, d => `${d.name} (${d.version})`, d => d.description);
+            document.getElementById('assistantCount').textContent = items.length;
+        }
+        window.saveAssistant = async () => {
+            const data = {
+                name: g('asName'), version: g('asVersion'), description: g('asDesc'),
+                icon: g('asIcon'), badge: g('asBadge'),
+                features: g('asFeats').split(',').map(f => f.trim()).filter(f => f),
+                tech: g('asTech').split(',').map(t => t.trim()).filter(t => t),
+                downloadLink: g('asDL'), githubLink: g('asGH'),
+                order: parseInt(g('asOrder')) || 1
+            };
+            const editId = g('asEditId');
+            if (editId) {
+                await saveDoc('assistants', editId, data);
+                s('asEditId', '');
+            } else {
+                await addToCollection('assistants', data);
+            }
+            loadAssistantsTab();
+            clearAssistantForm();
+        };
+        window.clearAssistantForm = () => {
+            ['asName','asVersion','asDesc','asIcon','asBadge','asFeats','asTech','asDL','asGH','asOrder','asEditId'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = id === 'asIcon' ? 'fas fa-robot' : id === 'asOrder' ? '1' : '';
+            });
+        };
+
+        // ===== ADD FUNCTIONS =====
+        window.addMetaNav = () => addToCollection('meta_nav', { label: g('metaLabel'), page: g('metaPage'), order: parseInt(g('metaOrder')) || 1 });
+        window.addSocialNav = () => addToCollection('social_nav', { label: g('socLabel'), icon: g('socIcon'), url: g('socUrl'), order: parseInt(g('socOrder')) || 1 });
+        window.addMainNav = () => addToCollection('main_nav', { label: g('navLabel'), page: g('navPage'), order: parseInt(g('navOrder')) || 1 });
+        window.addWidget = () => addToCollection('small_widgets', { title: g('wTitle'), description: g('wDesc'), linkText: g('wLinkText'), linkPage: g('wLinkPage'), order: parseInt(g('wOrder')) || 1 });
+        window.addListWidget = () => {
+            try {
+                const items = JSON.parse(g('lwItems') || '[]');
+                addToCollection('list_widgets', { title: g('lwTitle'), items, moreLink: g('lwMore'), order: parseInt(g('lwOrder')) || 1 });
+            } catch (e) { showToast('Invalid JSON in Items field', 'error'); }
+        };
+        window.addBottomRow = () => {
+            const type = g('brType');
+            const data = { type, title: g('brTitle'), moreLink: g('brMore'), order: parseInt(g('brOrder')) || 1 };
+            if (type === 'success') {
+                data.quote = g('brQuote'); data.quoteTitle = g('brQuoteTitle');
+                data.quoteAuthor = g('brQuoteAuthor'); data.quoteLink = g('brQuoteLink');
+            } else {
+                try { data.categories = JSON.parse(g('brCats') || '[]'); } catch (e) { showToast('Invalid JSON in Categories', 'error'); return; }
+            }
+            addToCollection('bottom_row', data);
+        };
+        window.addDoc = () => addToCollection('documentation', { title: g('docTitle'), description: g('docDesc'), link: g('docLink'), order: parseInt(g('docOrder')) || 1 });
+        window.addForum = () => addToCollection('forums', { title: g('fTitle'), description: g('fDesc'), link: g('fLink'), order: parseInt(g('fOrder')) || 1 });
+        window.addFooterNav = () => addToCollection('footer_nav', { label: g('fnLabel'), page: g('fnPage'), order: parseInt(g('fnOrder')) || 1 });
+
+        window.toggleBottomRowFields = () => {
+            const type = g('brType');
+            document.getElementById('brSuccessFields').style.display = type === 'success' ? 'block' : 'none';
+            document.getElementById('brAppFields').style.display = type === 'applications' ? 'block' : 'none';
+        };
+
+        // ===== DASHBOARD =====
+        async function loadDashboard() {
+            const counts = [
+                { coll: 'assistants', id: 'statAssistants' },
+                { coll: 'documentation', id: 'statDocs' },
+                { coll: 'main_nav', id: 'statNav' },
+                { coll: 'chat_messages', id: 'statMessages' }
+            ];
+            for (const c of counts) {
+                const snap = await getDocs(collection(db, c.coll));
+                document.getElementById(c.id).textContent = snap.size;
+            }
+            document.getElementById('assistantCount').textContent = document.getElementById('statAssistants').textContent;
+        }
+
+        window.exportAllData = async () => {
+            showToast('Exporting data...', 'info');
+            const collections = ['settings','meta_nav','social_nav','main_nav','small_widgets','list_widgets','bottom_row','assistants','documentation','forums','footer_nav'];
+            const exportData = {};
+            for (const coll of collections) {
+                const snap = await getDocs(collection(db, coll));
+                exportData[coll] = [];
+                snap.forEach(d => exportData[coll].push({ id: d.id, ...d.data() }));
+            }
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `pireactive-backup-${new Date().toISOString().split('T')[0]}.json`; a.click();
+            showToast('Export complete! 📥', 'success');
+        };
+
+        // Initialize
+        loadDashboard();
+        loadSiteConfig();
+        toggleBottomRowFields();
+        console.log('%c PIReactive Admin Panel %c v2.0 ', 'background:#2563eb;color:#fff;padding:4px 8px;font-weight:bold;border-radius:4px 0 0 4px', 'background:#1d4ed8;color:#fff;padding:4px 8px;border-radius:0 4px 4px 0');
+        console.log('📋 All changes save in real-time to Firestore');
+    </script>
+</body>
+</html>
